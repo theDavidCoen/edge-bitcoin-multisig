@@ -142,8 +142,6 @@ Master Private Key and Raw Keys `bitcoinKey` are the **bip49 shell seed** (12/24
 
 `buildMultisigDescriptor` throws if asked to label a non-BIP-48 xpub as `48'/0'/0'/2'`. Import matching uses the derived xpub bytes, not the origin string in the descriptor (old wallets could stamp `48'` on a BIP-49 node).
 
-On login, `repairMultisigBip48FromWalletSeed` re-derives the local cosigner from `getRawPrivateKey` → `bitcoinKey` and rewrites stored proposals. **This can change the P2WSH address** if the stored key was the wrong node. Empty test wallets are fine; funded wallets need a coordinated descriptor update on every device.
-
 Fingerprint in `[fp/48'/0'/0'/2']` is the **master fingerprint** when the root is depth 0.
 
 ---
@@ -242,7 +240,6 @@ Not a production Edge Play Store build.
 - [ ] Import/export interop: Sparrow / Specter descriptor + BSMS
 - [ ] Copy review for pending invite, spend request, and receive (P2WSH ≠ bip49 address)
 - [ ] Hermes: BIP-48 uses `deriveChild`, not a path string containing `'`
-- [ ] Funded-wallet repair: BIP-48 rewrite changes the script — needs a migration story
 
 ---
 
