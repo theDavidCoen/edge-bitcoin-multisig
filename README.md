@@ -26,6 +26,16 @@ No changes are required in `edge-currency-plugins` for receive/spend of the **sh
 
 ---
 
+## APK (Edge Grana)
+
+Sideload build, `app.edge.grana`, Edge `4.50.0` + this prototype (17 Aug 2026). ~136 MB; attached as a [GitHub Release](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases) (over GitHub’s 100 MB git-blob limit).
+
+**[Download APK](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/download/apk-20260817/edge-grana-multisig-4.50.0-20260817.apk)** · [Release notes](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/tag/apk-20260817)
+
+Install over a previous Grana with the same signing key (`adb install -r`). Not on Play Store.
+
+---
+
 ## Why this belongs in Edge
 
 1. **From-scratch multisig is an Edge-user product.** New wallets are created by inviting other Edge accounts (Nostr `npub` or NIP-05). That is intentional, not an unfinished xpub form.
