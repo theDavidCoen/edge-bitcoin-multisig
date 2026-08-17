@@ -186,7 +186,7 @@ Store id: `edge-multisig` on `account.dataStore`.
 | `onchain-{walletId}` | Compact on-chain snapshot for watch |
 | `pendingNostrOutbox` | Gift wraps to retry if a relay publish fails |
 
-The Nostr secret is **not** derived from `bitcoinKey`. It is created with `schnorr.utils.randomSecretKey()` on first use (`ensureNostrIdentity`). Users can replace it from Settings → Nostr Account by importing an `nsec`.
+The Nostr secret is **not** derived from `bitcoinKey`. It is created with `schnorr.utils.randomSecretKey()` on first **multisig/Nostr use** (`ensureNostrIdentity` from Create Multisig or Settings → Nostr Account), not on every login. Users can replace it from Settings → Nostr Account by importing an `nsec`.
 
 ---
 
@@ -199,6 +199,8 @@ Default Nostr relays (`util/nostr/relayPool.ts`):
 - `wss://relay.primal.net`
 
 Inbox is kind **1059** gift wraps tagged `p` = this device’s pubkey. Profiles are kind **0** via a one-shot `queryRelays` so they do not disturb the inbox subscription.
+
+`MultisigNostrService` must **not** auto-create an identity or open these relays on login for accounts that have never used multisig. That raced wallet sync with ~9 WebSockets (inbox pool + kind-0 queries) and made the whole app feel stuck. Subscribe only once an identity already exists; create keys lazily in Create Multisig / Nostr settings.
 
 P2WSH watch uses the same Edge Blockbook bases as Bitcoin (`getBlockbookBases`).
 
@@ -231,7 +233,48 @@ Not a production Edge Play Store build.
 
 ---
 
-## 11. Suggested merge checklist for Edge
+## 11. Performance — must improve
+
+The join/complete protocol works, but several waits are still too long for
+product use. Treat these as open work, not polish:
+
+1. **Invite card after login.** Target: banner visible in about **2 seconds**
+   even while other wallets are still loading. Locally stored joinable
+   invites should paint immediately; live Nostr dumps must not wait on a
+   full relay reconnect cycle (historically 8–30+ seconds when sockets were
+   not open yet). Keep subscribe stable across wallet boot (do not tear
+   down the pool on every `account` object change).
+
+2. **Loading after slide to join.** `acceptMultisigInvite` still does too
+   much on the slider critical path: orphan cleanup, BIP-49 wallet
+   create/resolve, BIP-48 key derivation, persist, Nostr accept/complete
+   publish, notification bookkeeping, orphan replay. The slider stays busy
+   until that finishes, then navigates home. Move non-essential work off
+   the join gesture so the UI can leave the pending scene in ~1–2 seconds
+   and finish publish/sync in the background.
+
+3. **Cosigner status after join.** “You” / peer rows should flip to accepted
+   from local state without waiting for a later inbox poll. Remote peers
+   still need a faster accept/complete round-trip than the 8s pending poll.
+
+4. **Wallet list vs P2WSH balance.** Shell BTC balances must not be mistaken
+   for the multisig. P2WSH watch refresh should not block first paint of
+   the list or the invite card.
+
+5. **Relay pool.** First successful relay should be enough to show an
+   invite or publish an accept. Dead relays must not stall the UI for their
+   full timeout. Reconnect backoff should stay aggressive on first retry.
+
+Do **not** “fix” latency by restarting the Nostr subscribe effect, stopping
+the pool, or clearing the orphan inbox on unrelated wallet-load updates —
+that reintroduces the 30s invite-card delay.
+
+Do **not** auto-create a Nostr identity or open Damus / nos.lol / Primal
+sockets on login for accounts that have never used multisig.
+
+---
+
+## 12. Suggested merge checklist for Edge
 
 - [ ] Security review: Nostr nsec in `dataStore`, NIP-17 to public relays, Blockbook for P2WSH
 - [ ] Confirm BIP-48 derivation from `bitcoinKey` (depth 4 / index `2'`) on device, not only unit tests
@@ -240,10 +283,12 @@ Not a production Edge Play Store build.
 - [ ] Import/export interop: Sparrow / Specter descriptor + BSMS
 - [ ] Copy review for pending invite, spend request, and receive (P2WSH ≠ bip49 address)
 - [ ] Hermes: BIP-48 uses `deriveChild`, not a path string containing `'`
+- [ ] Performance: invite card ~2s after login; slide-to-join not blocked on Nostr/wallet work
+- [ ] Performance: no Nostr sockets / identity on login for accounts that never used multisig
 
 ---
 
-## 12. Contact
+## 13. Contact
 
 **David Coen** · prototype for Edge review (built with Cursor).
 
