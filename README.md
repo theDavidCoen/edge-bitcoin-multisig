@@ -18,6 +18,14 @@ No changes are required in `edge-currency-plugins` for receive/spend of the **sh
 
 ---
 
+## Demo
+
+[~3 min, Android / Edge Grana] Create a 2-of-3 wallet, invite two cosigners by npub, slide to join, and watch statuses update until the shared P2WSH is ready.
+
+**[Watch the full-flow demo](https://github.com/theDavidCoen/edge-bitcoin-multisig/blob/main/demo/full-flow.mp4)** (`demo/full-flow.mp4`)
+
+---
+
 ## Why this belongs in Edge
 
 1. **From-scratch multisig is an Edge-user product.** New wallets are created by inviting other Edge accounts (Nostr `npub` or NIP-05). That is intentional, not an unfinished xpub form.
