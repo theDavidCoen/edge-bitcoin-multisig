@@ -195,7 +195,7 @@ Legacy BIP-49 cosigner keys (pre-BIP-48 wallets) still sign through `legacyBip49
 ## 7. Swap support status
 
 This prototype includes the **multisig swap UX and spend-flow wiring**, but
-local developer QA currently has a hard limitation:
+local testing currently has a hard limitation:
 
 - The Grana / local dev build in this repo does **not** have access to the
   production exchange-provider secrets.
