@@ -28,9 +28,9 @@ No changes are required in `edge-currency-plugins` for receive/spend of the **sh
 
 ## APK (Edge Grana)
 
-Sideload build, `app.edge.grana`, Edge `4.50.0` + this prototype (17 Aug 2026). ~136 MB; attached as a [GitHub Release](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases) (over GitHub’s 100 MB git-blob limit).
+Sideload build, `app.edge.grana`, Edge `4.50.0` + this prototype (18 Aug 2026). ~136 MB; attached as a [GitHub Release](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases) (over GitHub’s 100 MB git-blob limit).
 
-**[Download APK](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/download/apk-20260817/edge-grana-multisig-4.50.0-20260817.apk)** · [Release notes](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/tag/apk-20260817)
+**[Download APK](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/download/apk-20260818/app-release.apk)** · [Release notes](https://github.com/theDavidCoen/edge-bitcoin-multisig/releases/tag/apk-20260818)
 
 Install over a previous Grana with the same signing key (`adb install -r`). Not on Play Store.
 
@@ -210,6 +210,11 @@ This means the local error is **not evidence that the multisig PSBT / Nostr
 flow is wrong**. It only means this prototype cannot fully exercise the
 provider side of swap quote creation from a developer build that lacks the
 production exchange setup.
+
+During QA, a few app-side compatibility shims were tested and then removed
+again. Those experiments should **not** be treated as the intended final
+integration path. The real unresolved dependency is still access to the
+production exchange-provider setup.
 
 ### What developers should do when wiring production swap testing
 
