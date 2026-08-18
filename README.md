@@ -192,7 +192,52 @@ Legacy BIP-49 cosigner keys (pre-BIP-48 wallets) still sign through `legacyBip49
 
 ---
 
-## 7. Persistence
+## 7. Swap support status
+
+This prototype includes the **multisig swap UX and spend-flow wiring**, but
+local developer QA currently has a hard limitation:
+
+- The Grana / local dev build in this repo does **not** have access to the
+  production exchange-provider secrets.
+- In Edge, those secrets are **not versioned in git** on `master`; production
+  pulls them in from an external secret-files source during build time.
+- Without that production `env.json` content, Bitcoin swap providers either do
+  not initialize fully or cannot be validated locally, so BTC swaps return
+  **“No enabled exchanges support BTC to ETH”** even for a normal singlesig
+  Bitcoin wallet.
+
+This means the local error is **not evidence that the multisig PSBT / Nostr
+flow is wrong**. It only means this prototype cannot fully exercise the
+provider side of swap quote creation from a developer build that lacks the
+production exchange setup.
+
+### What developers should do when wiring production swap testing
+
+Once Edge developers test with the real production exchange configuration,
+multisig swaps should be implemented with this contract:
+
+1. **Treat the multisig wallet like Bitcoin for provider compatibility.**
+   Quote / approval should be requested as if the asset were a normal Bitcoin
+   wallet so centralized swap providers can price BTC pairs normally.
+2. **Use a P2WSH address from the multisig wallet anywhere the provider expects
+   a wallet address.**
+   That includes the address surfaced to the provider as the wallet’s
+   destination / refund / return address.
+3. **Keep the actual send path multisig-native.**
+   After the provider returns a deposit address, Edge must still build a P2WSH
+   PSBT, send cosignature requests over encrypted Nostr, and only broadcast
+   once the multisig threshold is met.
+4. **Preserve the 5-minute expiry for swap PSBTs.**
+   If cosigners do not complete the request in time, the swap request should be
+   cancelled and forgotten.
+
+In short: **providers should see “plain Bitcoin”, but the wallet address they
+interact with must be a P2WSH address belonging to the multisig wallet, and
+Edge must keep the actual spend flow on the PSBT/Nostr multisig path.**
+
+---
+
+## 8. Persistence
 
 Store id: `edge-multisig` on `account.dataStore`.
 
@@ -208,7 +253,7 @@ The Nostr secret is **not** derived from `bitcoinKey`. It is created with `schno
 
 ---
 
-## 8. Relays and Blockbook
+## 9. Relays and Blockbook
 
 Default Nostr relays (`util/nostr/relayPool.ts`):
 
@@ -224,7 +269,7 @@ P2WSH watch uses the same Edge Blockbook bases as Bitcoin (`getBlockbookBases`).
 
 ---
 
-## 9. Tests
+## 10. Tests
 
 ```bash
 cd edge-react-gui
@@ -235,7 +280,7 @@ Coverage includes BIP-48 depth/index vs origin labels, descriptor checksums, imp
 
 ---
 
-## 10. Grana release APK (local QA)
+## 11. Grana release APK (local QA)
 
 ```bash
 export ANDROID_HOME=/home/david/.android-sdk
@@ -251,7 +296,7 @@ Not a production Edge Play Store build.
 
 ---
 
-## 11. Performance — must improve
+## 12. Performance — must improve
 
 The join/complete protocol works, but several waits are still too long for
 product use. Treat these as open work, not polish:
@@ -292,7 +337,7 @@ sockets on login for accounts that have never used multisig.
 
 ---
 
-## 12. Suggested merge checklist for Edge
+## 13. Suggested merge checklist for Edge
 
 - [ ] Security review: Nostr nsec in `dataStore`, NIP-17 to public relays, Blockbook for P2WSH
 - [ ] Confirm BIP-48 derivation from `bitcoinKey` (depth 4 / index `2'`) on device, not only unit tests
@@ -306,7 +351,7 @@ sockets on login for accounts that have never used multisig.
 
 ---
 
-## 13. Contact
+## 14. Contact
 
 **David Coen** · prototype for Edge review (built with Cursor).
 
