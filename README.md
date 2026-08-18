@@ -237,7 +237,61 @@ Edge must keep the actual spend flow on the PSBT/Nostr multisig path.**
 
 ---
 
-## 8. Persistence
+## 8. Buy and Sell notes
+
+These flows are **not** fully implemented in this prototype, but they are the
+next logical product/design questions once swap-provider access is available.
+
+### 8.1 Buy
+
+`Buy` should be the simpler case:
+
+- The provider should request a normal receive address from the selected wallet.
+- For a complete multisig wallet, Edge should surface a **P2WSH receive
+  address** from the multisig wallet, not a bip49 shell address.
+- The provider can then send purchased BTC directly to that P2WSH address.
+- No cosigner interaction is required, because this is an **incoming** flow.
+
+So the mental model for developers is:
+
+> `Buy` for multisig should behave like ordinary Bitcoin receive, except the
+> receive address exposed to the provider must come from the shared P2WSH
+> wallet.
+
+### 8.2 Sell
+
+`Sell` needs product and technical review.
+
+Today many sell flows assume a normal single-signer “slide to confirm” send.
+For multisig, developers should instead evaluate whether that final confirmation
+must become the same signing model already used for multisig send:
+
+1. Build the spend as a **PSBT** against the multisig P2WSH UTXOs.
+2. Send the spend request to cosigners over **encrypted Nostr**.
+3. Collect signatures until the threshold is met.
+4. Let the last required signer finalize and broadcast.
+
+Open questions for Edge developers:
+
+- Can the provider flow tolerate replacing **slide to confirm** with
+  **slide to sign**?
+- At what point in the sell UX should the provider order be considered locked
+  if broadcast still depends on cosigner participation?
+- Should sell requests use the same **5-minute maximum window** already used
+  for multisig swap PSBTs, after which the request is cancelled and forgotten?
+- If the provider has stricter timing guarantees, does sell need a distinct
+  expiry model from swap/send?
+
+Recommended starting point:
+
+> Treat `Sell` as a multisig spend first, and only then map the provider UX on
+> top of that constraint. If the provider requires an unconditional immediate
+> broadcast after one local gesture, then the standard singlesig sell UX is not
+> directly compatible with a threshold wallet.
+
+---
+
+## 9. Persistence
 
 Store id: `edge-multisig` on `account.dataStore`.
 
@@ -253,7 +307,7 @@ The Nostr secret is **not** derived from `bitcoinKey`. It is created with `schno
 
 ---
 
-## 9. Relays and Blockbook
+## 10. Relays and Blockbook
 
 Default Nostr relays (`util/nostr/relayPool.ts`):
 
@@ -269,7 +323,7 @@ P2WSH watch uses the same Edge Blockbook bases as Bitcoin (`getBlockbookBases`).
 
 ---
 
-## 10. Tests
+## 11. Tests
 
 ```bash
 cd edge-react-gui
@@ -280,7 +334,7 @@ Coverage includes BIP-48 depth/index vs origin labels, descriptor checksums, imp
 
 ---
 
-## 11. Grana release APK (local QA)
+## 12. Grana release APK (local QA)
 
 ```bash
 export ANDROID_HOME=/home/david/.android-sdk
@@ -296,7 +350,7 @@ Not a production Edge Play Store build.
 
 ---
 
-## 12. Performance — must improve
+## 13. Performance — must improve
 
 The join/complete protocol works, but several waits are still too long for
 product use. Treat these as open work, not polish:
@@ -337,7 +391,7 @@ sockets on login for accounts that have never used multisig.
 
 ---
 
-## 13. Suggested merge checklist for Edge
+## 14. Suggested merge checklist for Edge
 
 - [ ] Security review: Nostr nsec in `dataStore`, NIP-17 to public relays, Blockbook for P2WSH
 - [ ] Confirm BIP-48 derivation from `bitcoinKey` (depth 4 / index `2'`) on device, not only unit tests
@@ -351,7 +405,7 @@ sockets on login for accounts that have never used multisig.
 
 ---
 
-## 14. Contact
+## 15. Contact
 
 **David Coen** · prototype for Edge review (built with Cursor).
 
