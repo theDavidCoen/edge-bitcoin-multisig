@@ -355,41 +355,48 @@ Not a production Edge Play Store build.
 
 ---
 
-## 13. Performance — must improve
+## 13. Performance — progress and remaining work
 
-The join/complete protocol works, but several waits are still too long for
-product use. Treat these as open work, not polish:
+The join/complete protocol works, and some of the worst early latency issues
+have already been improved. The remaining items below are the ones that still
+need product-level attention.
 
-1. **Invite card after login.** Target: banner visible in about **2 seconds**
-   even while other wallets are still loading. Locally stored joinable
-   invites should paint immediately; live Nostr dumps must not wait on a
-   full relay reconnect cycle (historically 8–30+ seconds when sockets were
-   not open yet). Keep subscribe stable across wallet boot (do not tear
-   down the pool on every `account` object change).
+### 13.1 Improved in this prototype
 
-2. **Loading after slide to join.** `acceptMultisigInvite` still does too
-   much on the slider critical path: orphan cleanup, BIP-49 wallet
-   create/resolve, BIP-48 key derivation, persist, Nostr accept/complete
-   publish, notification bookkeeping, orphan replay. The slider stays busy
-   until that finishes, then navigates home. Move non-essential work off
-   the join gesture so the UI can leave the pending scene in ~1–2 seconds
-   and finish publish/sync in the background.
+1. **Invite card after login** is in better shape than the earliest versions.
+   The app no longer auto-creates a Nostr identity or opens the relay set on
+   login for accounts that have never used multisig. Cached joinable invites
+   can also surface before full relay repair/cleanup finishes.
 
-3. **Cosigner status after join.** “You” / peer rows should flip to accepted
-   from local state without waiting for a later inbox poll. Remote peers
-   still need a faster accept/complete round-trip than the 8s pending poll.
+2. **Wallet list vs P2WSH balance** is improved. The shell bip49 balance is no
+   longer the only balance users see for a complete multisig wallet. The GUI
+   now surfaces the shared P2WSH balance in the wallet list, balance card, and
+   swap entry points so the shell wallet is less likely to be mistaken for the
+   real funds.
 
-4. **Wallet list vs P2WSH balance.** Shell BTC balances must not be mistaken
-   for the multisig. P2WSH watch refresh should not block first paint of
-   the list or the invite card.
+3. **Relay startup behavior** is improved. Subscribe/poll behavior is more
+   conservative, the first inbox poll uses a short timeout, and retry timing is
+   more aggressive than the original “wait for a full reconnect cycle” model.
 
-5. **Relay pool.** First successful relay should be enough to show an
-   invite or publish an accept. Dead relays must not stall the UI for their
-   full timeout. Reconnect backoff should stay aggressive on first retry.
+### 13.2 Still open
+
+1. **Loading after slide to join.** `acceptMultisigInvite` still does too much
+   on the slider critical path: orphan cleanup, BIP-49 wallet create/resolve,
+   BIP-48 key derivation, persist, Nostr accept/complete publish, notification
+   bookkeeping, and orphan replay. The slider should still get lighter so the
+   UI can leave the pending scene in ~1–2 seconds and finish non-essential work
+   in the background.
+
+2. **Cosigner status after join.** Local state is better than before, but the
+   remote-peer round trip is still not ideal. Pending proposals still rely on a
+   periodic inbox poll, so accept/complete propagation can remain slower than a
+   truly responsive product experience.
+
+### 13.3 Do not regress
 
 Do **not** “fix” latency by restarting the Nostr subscribe effect, stopping
 the pool, or clearing the orphan inbox on unrelated wallet-load updates —
-that reintroduces the 30s invite-card delay.
+that reintroduces the long invite-card delay.
 
 Do **not** auto-create a Nostr identity or open Damus / nos.lol / Primal
 sockets on login for accounts that have never used multisig.
